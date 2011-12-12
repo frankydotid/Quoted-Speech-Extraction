@@ -1,0 +1,14 @@
+README
+
+Implementation of Reported Speech Extraction or you can 
+call it Quoted Text Extraction. Just a simple extraction
+of the quoted text from Indonesian news. This is not a new
+idea. You can find papers on internet that do the same
+thing. The only difference is that I do it for Indonesian
+language. By the way, this is for my Computational
+Linguistic class. I hope to do something better than this
+by adding anaphora resolution and speech summarization
+from certain person in certain topic. But, let us see 
+later
+
+Cheers,
