@@ -1,27 +1,40 @@
 import java.util.Vector;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.regex.*;
 
 /**
 	Class that provide useful things
 */
 public class Utility {
 	
+	/**
+		Parse text as Sentences
+	*/
 	public static Vector<Sentence> parseAsSentences(String text) {
 		Vector<Sentence> sentences = new Vector<Sentence>();
+		
+		// tokenize the text
 		Vector<Token> tokens = Utility.parseAsTokens(text);
 		
 		Token previousToken = null;
 		Token currentToken = null;
 		
 		Sentence sentence = new Sentence();
+		
+		// pattern for quote
+		Pattern pQuote = Pattern.compile("([\"'”])");
+		Matcher m = null;
 				
 		// construct sentences
 		for(int i=0;i<tokens.size();i++) {
 			currentToken = tokens.get(i);
 			
 			// if it is in quote treat each sentences inside quotes as part of the main sentence
-			if(currentToken.getToken().matches("[\"'”]")) {
+			m = pQuote.matcher(currentToken.getToken());
+			if(m.find()) {
+				String quoteType = m.group(1);
+				
 				sentence.add(currentToken);
 				previousToken = currentToken;
 				
@@ -31,9 +44,12 @@ public class Utility {
 					sentence.add(currentToken);
 					
 					// detect variation of how the quote ends
-					if(currentToken.getToken().matches("[\"'”]")) {
+					if(currentToken.getToken().matches(quoteType)) {
 						if(previousToken.getToken().equals("[\\.]")) {
+							sentence.trim();
+							
 							sentences.add(sentence);
+							
 							sentence = new Sentence();
 							
 							//~ System.out.println(sentence.toString());
@@ -49,7 +65,11 @@ public class Utility {
 			// consider these punctuations as sentence boundary
 			if(currentToken.getToken().matches("[\\.]|[—]|[-]")) {
 				sentence.add(currentToken);
+				
+				sentence.trim();
+				
 				sentences.add(sentence);
+				
 				previousToken = currentToken;
 				
 				//~ System.out.println(sentence.toString());		
@@ -59,6 +79,9 @@ public class Utility {
 			// the last sentence
 			else if(i==tokens.size()-1) {
 				sentence.add(currentToken);
+				
+				sentence.trim();
+				
 				sentences.add(sentence);
 				
 				//~ System.out.println(sentence.toString());
@@ -83,6 +106,10 @@ public class Utility {
 		for(String tbs: tokensBySpace) {
 			Token t = new Token(tbs.trim());
 			
+			String mainToken = "";
+			int numOfPuncInFront = 0;
+			int numOfPuncInBack = 0;
+			
 			// add directly if this is title
 			if(t.isTitle()) {
 				tokens.add(new Token(t.getToken()));
@@ -92,9 +119,6 @@ public class Utility {
 			// start the lengthy tokenization process
 			else {
 				//~ System.out.print(t.getToken() + " : {");
-				int numOfPuncInFront = 0;
-				int numOfPuncInBack = 0;
-				
 				char c[] = t.getToken().toCharArray();
 				
 				// parse the punctuations in front of this word (if any)
@@ -119,11 +143,14 @@ public class Utility {
 				}
 				
 				// get the real word after punctuation removal
-				tokens.add(new Token(t.getToken().substring(numOfPuncInFront, 
-													t.getToken().length()-numOfPuncInBack)));
+				mainToken = t.getToken().substring(numOfPuncInFront, 
+													t.getToken().length()-numOfPuncInBack);
+				
+				if(mainToken.length() > 0) 
+					tokens.add(new Token(mainToken));
 				
 				// add the punctuations found before (for the end punctuations only)
-				for(int i=c.length-1;i>=c.length-numOfPuncInBack;i--) {
+				for(int i=c.length-numOfPuncInBack;i<c.length;i++) {
 					tokens.add(new Token(c[i] + ""));
 					//~ System.out.print(c[i] + ", ");
 				}
@@ -136,7 +163,8 @@ public class Utility {
 			}
 			
 			// add space as word boundary
-			tokens.add(new Token(" "));
+			if(mainToken.length()>0 || numOfPuncInFront > 0 || numOfPuncInBack > 0) 
+				tokens.add(new Token(" "));
 		}
 				
 		return tokens;

@@ -1,9 +1,8 @@
-import java.util.regex.Pattern;
+import java.util.regex.*;
 import java.util.Vector;
 
-
 /**
-	Representing sentence inside the news
+	Representing a sentence inside the news
 */
 public class Sentence {
 	Vector<Token> tokens = new Vector<Token>();
@@ -48,24 +47,52 @@ public class Sentence {
 	public Vector<String> getNamedEntity() {
 		Vector<String> namedEntities = new Vector<String>();
 		
+		// quote pattern
+		Pattern pQuote = Pattern.compile("([\"”])");
+		Matcher m = null;
+		
 		String prevNonEmpty = "";
+		String prevBeforeCap = "";	// used to identify word before named entity, e.g. di or ke, means the named entity is a location
+		
 		for(int i=0;i<tokens.size();i++) {
 			String namedEntity = "";
 			
-			// skip space when extracting
+			// ignore everything inside quote
+			m = pQuote.matcher(tokens.elementAt(i).getToken());
+			if(m.find()) {
+				int startingI = i;
+				
+				String quoteType = m.group(1);
+				
+				i++;
+				while(i < tokens.size() 
+					&& !tokens.elementAt(i).getToken().equals(quoteType))
+					i++;
+				
+				if(i==tokens.size())
+					i = startingI;
+				
+				continue;
+			}
+			
+			// ignore space
 			if(tokens.elementAt(i).getToken().equals(" "))
 				continue;
 			
-			prevNonEmpty = tokens.elementAt(i).getToken();
+			if(i>1) {
+				prevBeforeCap = tokens.elementAt(i-2).getToken();
+				prevNonEmpty = prevBeforeCap;
+			}
 			
 			// detect whether the token starts with uppercase letter or not
 			if(tokens.elementAt(i).firstChar().matches("[A-Z]")) {
+				
 				// ignore unrelated words to the named entity
-				if(!tokens.elementAt(i).getToken().equals("Menurut"))
-					namedEntity = tokens.elementAt(i).getToken();
+				//~ if(!tokens.elementAt(i).getToken().equals("Menurut"))
+				//~ namedEntity = tokens.elementAt(i).getToken();
 				
 				int numOfTokens = 0;
-				for(i=i+1;i<tokens.size();i++) {
+				for(i=i;i<tokens.size();i++) {
 					Token t = tokens.elementAt(i);
 					
 					// cleanup this 'KOMPAS.com' token to minimize false identification, need more general rule
@@ -74,8 +101,9 @@ public class Sentence {
 						break;
 					}
 					
-					// tolerate a named entity whose components separated by space, comma, and also ignore the name of the day
-					if(t.getToken().equals(" ") || t.getToken().equals(",")
+					// tolerate a named entity whose components separated by space and also ignore the name of the day
+					if(t.getToken().equals(" ") 
+						//~ || t.getToken().equals(",")
 						|| t.getToken().equals("Senin") || t.getToken().equals("Selasa")
 						|| t.getToken().equals("Rabu") || t.getToken().equals("Kamis")
 						|| t.getToken().equals("Jumat") || t.getToken().equals("Sabtu")
@@ -99,26 +127,43 @@ public class Sentence {
 							
 						numOfTokens++;
 					} else {
+						i--;
 						break;
 					}
 				}
 				
-				// get the named entity but not named entity with length 1 that occurs after "." (dot), to minimize false identification
-				// of first word in a sentence as a named entity
-				if(numOfTokens > 0 && !prevNonEmpty.equals(".")) {
-					// remove these words if the named entity ends with one of them
-					if(prevNonEmpty.equals("dan") || prevNonEmpty.equals("selaku")
-						|| prevNonEmpty.equals("untuk"))
-						namedEntity = namedEntity.replaceFirst(prevNonEmpty, "");
-					
-					// remove these punctuations
-					if(namedEntity.contains("(") && !namedEntity.contains(")"))
-						namedEntity = namedEntity.replaceFirst("\\(", "");
-					
-					// remove this Kompas news specific word
+				// Kompas related problem
+				if(namedEntity.contains("Photo")) {
 					namedEntity = namedEntity.replaceFirst("Photo", "");
+					numOfTokens--;
+				}
+				
+				// remove these words if the named entity ends with one of them
+				if(prevNonEmpty.equals("dan") || prevNonEmpty.equals("selaku")
+						|| prevNonEmpty.equals("untuk")) {
+					namedEntity = namedEntity.replaceFirst(prevNonEmpty, "");
+					numOfTokens--;
+				}
+				
+				// remove these punctuations
+				if(namedEntity.contains("(") && !namedEntity.contains(")")) {
+					namedEntity = namedEntity.replaceFirst("\\(", "");
+					numOfTokens--;
+				}
+				
+				if(numOfTokens > 1) {
+					//~ if(namedEntity.matches("[\\sA-Z]+")) {
+						//~ namedEntities.add("<INSTITUTION>" + namedEntity.trim() + "</INSTITUTION>");
+					//~ }
 					
-					namedEntities.add(namedEntity.trim());
+					// ignore location
+					if(prevBeforeCap.equals("di") || prevBeforeCap.equals("ke")) {
+						//~ namedEntities.add("<LOCATION>" + namedEntity.trim() + "</LOCATION>");
+					}
+					
+					else {					
+						namedEntities.add(namedEntity.trim());
+					}
 				}
 			}
 		}
@@ -158,6 +203,27 @@ public class Sentence {
 			subsentence.add(tokens.elementAt(i));
 		}
 		return subsentence;
+	}
+	
+	public void trim() {
+		for(int i=0;i<tokens.size();i++) {
+			if(!tokens.elementAt(i).getToken().equals(" ") &&
+				!tokens.elementAt(i).getToken().equals("")) {
+				break;
+			} else {
+				tokens.removeElementAt(i);
+				i--;
+			}
+		}
+		
+		for(int i=tokens.size()-1;i>-1;i--) {
+			if(!tokens.elementAt(i).getToken().equals(" ") &&
+				!tokens.elementAt(i).getToken().equals("")) {
+				break;
+			} else {
+				tokens.removeElementAt(i);
+			}
+		}
 	}
 	
 	public String toString() {
