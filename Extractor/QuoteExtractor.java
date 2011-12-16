@@ -25,6 +25,8 @@ public class QuoteExtractor {
 			String pathComponents[] = topicDir.split("[\\|/]");
 			String topicId = pathComponents[pathComponents.length-1];
 			
+			System.out.println(topicId);
+			
 			// get the list of news to be extracted
 			String newsFiles[] = (new File(mainPath+"/"+topicDir)).list();
 			
@@ -523,7 +525,7 @@ public class QuoteExtractor {
 	/**
 		Get set of names from quotes
 	*/
-	private static TreeSet<String> getSetOfNames(Vector<Quote> quotes) {
+	public static TreeSet<String> getSetOfNames(Vector<Quote> quotes) {
 		TreeSet<String> setOfNames = new TreeSet<String>();
 		
 		for(Quote q: quotes)
@@ -535,7 +537,7 @@ public class QuoteExtractor {
 	/**
 		Get set of news from quotes
 	*/
-	private static TreeSet<String> getSetOfNews(Vector<Quote> quotes) {
+	public static TreeSet<String> getSetOfNews(Vector<Quote> quotes) {
 		TreeSet<String> setOfNames = new TreeSet<String>();
 		
 		for(Quote q: quotes)
@@ -547,7 +549,7 @@ public class QuoteExtractor {
 	/**
 		Get set of topics from quotes
 	*/
-	private static TreeSet<String> getSetOfTopics(Vector<Quote> quotes) {
+	public static TreeSet<String> getSetOfTopics(Vector<Quote> quotes) {
 		TreeSet<String> setOfNames = new TreeSet<String>();
 		
 		for(Quote q: quotes)
@@ -629,6 +631,23 @@ public class QuoteExtractor {
 		}
 	}
 	
+	/**
+		Print into readable / loadable model file
+	*/
+	public static void writeModel(Vector<Quote> quotes, String modelFile) throws IOException {
+		PrintWriter pw = new PrintWriter(new FileWriter(modelFile));
+		
+		for(Quote q: quotes) {
+			pw.println(q.getName() + "###" +
+						q.getNameInNews() + "###" +
+						q.getQuote() + "###" +
+						q.getNewsId() + "###" +
+						q.getTopicId());
+			pw.flush();
+		}
+	}
+	
+	
 	// words that indicate the speaker/person who produce the quote
 	private static String []speakerIndicator = {"kata", "tandas", "lanjut", "ujar", "papar", "pinta",
 												"tutur", "imbuh", "ucap", "ungkap", "pungkas", "jelas",
@@ -636,7 +655,7 @@ public class QuoteExtractor {
 												
 	// words that indicate there is a name (animate named entity) after this word	
 	private static String []beforeNameIndicator = {"menurut", "dikatakan", "dipaparkan", "kata", 
-													"lanjut"};
+													"ditambahkan", "lanjut"};
 	
 	// words that indicate there is a name (animate named entity) before this word
 	private static String []afterNameIndicator = {"mengatakan", "menyatakan", "memaparkan",
