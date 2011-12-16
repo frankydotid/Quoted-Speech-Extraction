@@ -4,9 +4,9 @@ import java.text.StringCharacterIterator;
 import java.util.regex.*;
 
 /**
-	Class that provide useful things
+	Class that provide useful things 
 */
-public class Utility {
+public class TextUtility {
 	
 	/**
 		Parse text as Sentences
@@ -15,7 +15,7 @@ public class Utility {
 		Vector<Sentence> sentences = new Vector<Sentence>();
 		
 		// tokenize the text
-		Vector<Token> tokens = Utility.parseAsTokens(text);
+		Vector<Token> tokens = TextUtility.parseAsTokens(text);
 		
 		Token previousToken = null;
 		Token currentToken = null;
@@ -194,9 +194,38 @@ public class Utility {
 		return distMatrix[a.length()][b.length()];
 	}
 	
+	public static int levenshteinWordDistance(String a, String b) {
+		String wordsInA[] = a.split("\\s+");
+		String wordsInB[] = b.split("\\s+");
+		
+		int [][]distMatrix = new int[wordsInA.length+1][wordsInB.length+1];
+		
+		for(int i=0;i<wordsInA.length+1;i++)
+			distMatrix[i][0] = i;
+		
+		for(int j=0;j<wordsInB.length+1;j++)
+			distMatrix[0][j] = j;
+		
+		for(int j=1;j<wordsInB.length+1;j++) {
+			for(int i=1;i<wordsInA.length+1;i++) {
+				if(wordsInA[i-1].equals(wordsInB[j-1])) {
+					distMatrix[i][j] = distMatrix[i-1][j-1] ;
+				} else {
+					// deletion - insertion - substitution
+					int min = getMinimum(distMatrix[i-1][j]+1, distMatrix[i][j-1]+1);
+					distMatrix[i][j] = getMinimum(min, distMatrix[i-1][j-1]+2);
+				}
+			}
+		}
+		
+		return distMatrix[wordsInA.length][wordsInB.length];
+	}
+	
 	public static int getMinimum(int a, int b) {
 		if(a < b) 
 			return a;
 		return b;
 	}
+	
+	
 }

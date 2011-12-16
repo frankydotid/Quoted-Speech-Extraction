@@ -1,69 +1,72 @@
-import java.util.*;
-import java.io.*;
-
+/**
+	Representing quote found in news
+*/
 public class Quote {
+	private String name;
+	private String nameInNews;
+	private String quote;
+	private String topicId;
+	private String newsId;
 	
 	public Quote() {
-		quotes = new Hashtable<String, String>();
+		this.name = "";
+		this.quote = "";
+		this.topicId = "";
+		this.newsId = "";
 	}
 	
-	public void buildQuoteIndexByName(String mainPath) throws IOException {
-		String topicDirs[] = (new File(mainPath)).list();
-		
-		
-		for(String topicDir : topicDirs) {
-			System.out.println(topicDir);
-			
-			Topic topic = new Topic();
-			topic.setTopic(mainPath + "/" + topicDir);
-			
-			Hashtable<String, String> topicQuotes = topic.getQuotes();
-			
-			// get quotes for each name found in topic
-			for(String name: topicQuotes.keySet()) {
-				String storedName = getStoredName(name); // name known
-				
-				if(storedName.equals("NONE")) {
-					quotes.put(name, "<QNAME>" + name + "</QNAME>\t" + topicQuotes.get(name));
-				} else {
-					quotes.put(storedName, quotes.get(storedName) + "\t" + topicQuotes.get(name));
-				}
-			}
-		}
+	public Quote(String name, String quote, String topicId, String newsId) {
+		this.name = name;
+		this.quote = quote;
+		this.topicId = topicId;
+		this.newsId = newsId;
 	}
 	
-	public void printQuotes() {
-		Set<String> names = quotes.keySet();
-		SortedSet<String> sortedNames = new TreeSet<String>();
-		
-		for(String s: names) {
-			sortedNames.add(s);
-		}
-		
-		for(String s: sortedNames) {
-			String quote[] = quotes.get(s).split("\t");
-			
-			System.out.println();
-			for(String q: quote) {
-				System.out.println(q);
-			}
-			System.out.println();
-		}
+	public Quote(String name, String nameInNews, String quote, String topicId, String newsId) {
+		this.name = name;
+		this.nameInNews = nameInNews;
+		this.quote = quote;
+		this.topicId = topicId;
+		this.newsId = newsId;
 	}
 	
-	private String getStoredName(String name) {
-		String storedName = "NONE";
-		
-		for(String s: quotes.keySet()) {
-			// get the first match with edit distance cost less that threshold
-			if(Utility.levenshteinDistance(s, name) < 5) {
-				storedName = s;
-				break;
-			}
-		}
-		
-		return storedName;
+	public void setName(String name) {
+		this.name = name;
 	}
 	
-	private Hashtable<String, String> quotes;
+	public String getName() {
+		return name;
+	}
+	
+	public void setNameInNews(String nameInNews) {
+		this.nameInNews = nameInNews;
+	}
+	
+	public String getNameInNews() {
+		return nameInNews;
+	}
+	
+	public void setQuote(String quote) {
+		this.quote = quote;
+	}
+	
+	public String getQuote() {
+		return quote;
+	}
+	
+	public void setTopicId(String topicId) {
+		this.topicId = topicId;
+	}
+	
+	public String getTopicId() {
+		return topicId;
+	}
+	
+	public void setNewsId(String newsId) {
+		this.newsId = newsId;
+	}
+	
+	public String getNewsId() {
+		return newsId;
+	}
 }
